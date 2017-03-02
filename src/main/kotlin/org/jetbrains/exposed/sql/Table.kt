@@ -278,7 +278,12 @@ open class Table(name: String = ""): ColumnSet(), DdlAware {
         get() = createStatement()
 
     override fun createStatement(): String  = buildString {
-        append("CREATE TABLE IF NOT EXISTS ${TransactionManager.current().identity(this@Table)}")
+        if (TransactionManager.current().db.dialect.hasSpecificCreateTableStatement()) {
+          append(TransactionManager.current().db.dialect.createTableStatement())
+        } else {
+            append("CREATE TABLE IF NOT EXISTS")
+        }
+        append(" ${TransactionManager.current().identity(this@Table)}")
         if (columns.any()) {
             append(columns.map { it.descriptionDdl() }.joinToString(prefix = " ("))
             var pkey = columns.filter { it.indexInPK != null }.sortedBy { it.indexInPK }

@@ -1,5 +1,6 @@
 package org.jetbrains.exposed.sql.vendors
 
+import com.sun.org.apache.xpath.internal.operations.Bool
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import java.util.*
@@ -46,6 +47,9 @@ interface DatabaseDialect {
 
     fun createIndex(unique: Boolean, tableName: String, indexName: String, columns: List<String>): String
     fun dropIndex(tableName: String, indexName: String): String
+
+    fun hasSpecificCreateTableStatement(): Boolean
+    fun createTableStatement(): String
 
     // Specific functions
     fun<T:String?> ExpressionWithColumnType<T>.match(pattern: String, mode: MatchMode? = null): Op<Boolean> = with(SqlExpressionBuilder) { this@match.like(pattern) }
@@ -191,6 +195,14 @@ internal abstract class VendorDialect(override val name: String) : DatabaseDiale
 
     override fun dropIndex(tableName: String, indexName: String): String {
         return "ALTER TABLE $tableName DROP CONSTRAINT $indexName"
+    }
+
+    override fun hasSpecificCreateTableStatement(): Boolean {
+        return false
+    }
+
+    override fun createTableStatement(): String {
+        throw UnsupportedOperationException("There's no generic SQL for CREATE TABLE IF NOT EXISTS. There must be vendor specific implementation")
     }
 
     override fun supportsSelectForUpdate() = true
